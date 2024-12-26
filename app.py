@@ -37,7 +37,7 @@ with st.sidebar:
         if gemini_key:
             st.session_state.GEMINI_API_KEY = gemini_key
             st.success("Gemini API Key saved!")
-            st.experimental_rerun()
+            st.rerun()
     else:
         st.success("Gemini API Key is configured")
         if st.button("🔄 Reset Gemini API Key"):
