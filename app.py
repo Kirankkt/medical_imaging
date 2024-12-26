@@ -5,30 +5,35 @@ from phi.model.google import Gemini
 import streamlit as st
 from phi.tools.google import GoogleSearch
 
-if "GOOGLE_API_KEY" not in st.session_state:
-    st.session_state.GOOGLE_API_KEY = None
+# Streamlit sidebar configuration for API keys
+if "GEMINI_API_KEY" not in st.session_state:
+    st.session_state.GEMINI_API_KEY = None
 
 with st.sidebar:
     st.title("ℹ️ Configuration")
 
-    if not st.session_state.GOOGLE_API_KEY:
-        api_key = st.text_input(
-            "Enter your Google API Key:",
+    # User inputs Gemini API Key
+    if not st.session_state.GEMINI_API_KEY:
+        gemini_key = st.text_input(
+            "Enter your Gemini API Key:",
             type="password"
         )
         st.caption(
-            "Get your API key from [Google AI Studio]"
-            "(https://aistudio.google.com/apikey) 🔑"
+            "Get your API key from [Google AI Studio](https://aistudio.google.com/apikey) 🔑"
         )
-        if api_key:
-            st.session_state.GOOGLE_API_KEY = api_key
-            st.success("API Key saved!")
-            st.rerun()
+        if gemini_key:
+            st.session_state.GEMINI_API_KEY = gemini_key
+            st.success("Gemini API Key saved!")
+            st.experimental_rerun()
     else:
-        st.success("API Key is configured")
-        if st.button("🔄 Reset API Key"):
-            st.session_state.GOOGLE_API_KEY = None
-            st.rerun()
+        st.success("Gemini API Key is configured")
+        if st.button("🔄 Reset Gemini API Key"):
+            st.session_state.GEMINI_API_KEY = None
+            st.experimental_rerun()
+
+    # Check for Serper API Key in secrets
+    if "SERPER_API_KEY" not in st.secrets:
+        st.error("Please add your Serper API Key to the Streamlit secrets.")
 
     st.info(
         "This tool provides AI-powered analysis of medical imaging data using "
@@ -40,17 +45,20 @@ with st.sidebar:
         "Do not make medical decisions based solely on this analysis."
     )
 
-medical_agent = Agent(
-    model=Gemini(
-        api_key=st.session_state.GOOGLE_API_KEY,
-        id="gemini-2.0-flash-exp"
-    ),
-    tools=[GoogleSearch(api_key=st.secrets["SERPER_API_KEY"])],
-    markdown=True
-) if st.session_state.GOOGLE_API_KEY else None
+# Initialize Medical Agent if both keys are available
+medical_agent = None
+if st.session_state.GEMINI_API_KEY and "SERPER_API_KEY" in st.secrets:
+    medical_agent = Agent(
+        model=Gemini(
+            api_key=st.session_state.GEMINI_API_KEY,
+            id="gemini-2.0-flash-exp"
+        ),
+        tools=[GoogleSearch(api_key=st.secrets["SERPER_API_KEY"])],
+        markdown=True
+    )
 
 if not medical_agent:
-    st.warning("Please configure your API key in the sidebar to continue")
+    st.warning("Please configure both the Gemini and Serper API keys to continue.")
 
 # Medical Analysis Query
 query = """
@@ -91,10 +99,10 @@ IMPORTANT: Use the GoogleSearch tool to:
 Format your response using clear markdown headers and bullet points. Be concise yet thorough.
 """
 
+# App UI
 st.title("🏥 Medical Imaging Diagnosis Agent")
 st.write("Upload a medical image for professional analysis")
 
-# Create containers for better organization
 upload_container = st.container()
 image_container = st.container()
 analysis_container = st.container()
@@ -108,11 +116,9 @@ with upload_container:
 
 if uploaded_file is not None:
     with image_container:
-        # Center the image using columns
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             image = Image.open(uploaded_file)
-            # Calculate aspect ratio for resizing
             width, height = image.size
             aspect_ratio = width / height
             new_width = 500
@@ -122,7 +128,7 @@ if uploaded_file is not None:
             st.image(
                 resized_image,
                 caption="Uploaded Medical Image",
-                use_container_width=True
+                use_column_width=True
             )
 
             analyze_button = st.button(
@@ -154,4 +160,4 @@ if uploaded_file is not None:
                     if os.path.exists(image_path):
                         os.remove(image_path)
 else:
-    st.info("👆 Please upload a medical image to begin analysis")
+    st.info("👆 Please upload a medical image to begin analysis.")
