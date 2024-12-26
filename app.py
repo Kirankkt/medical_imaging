@@ -3,14 +3,14 @@ from PIL import Image
 from phi.agent import Agent
 from phi.model.google import Gemini
 import streamlit as st
-from phi.tools.duckduckgo import DuckDuckGo
+from phi.tools.google import GoogleSearch
 
 if "GOOGLE_API_KEY" not in st.session_state:
     st.session_state.GOOGLE_API_KEY = None
 
 with st.sidebar:
     st.title("ℹ️ Configuration")
-    
+
     if not st.session_state.GOOGLE_API_KEY:
         api_key = st.text_input(
             "Enter your Google API Key:",
@@ -29,7 +29,7 @@ with st.sidebar:
         if st.button("🔄 Reset API Key"):
             st.session_state.GOOGLE_API_KEY = None
             st.rerun()
-    
+
     st.info(
         "This tool provides AI-powered analysis of medical imaging data using "
         "advanced computer vision and radiological expertise."
@@ -45,7 +45,7 @@ medical_agent = Agent(
         api_key=st.session_state.GOOGLE_API_KEY,
         id="gemini-2.0-flash-exp"
     ),
-    tools=[DuckDuckGo()],
+    tools=[GoogleSearch(api_key=st.secrets["SERPER_API_KEY"])],
     markdown=True
 ) if st.session_state.GOOGLE_API_KEY else None
 
@@ -81,10 +81,10 @@ You are a highly skilled medical imaging expert with extensive knowledge in radi
 - Address common patient concerns related to these findings
 
 ### 5. Research Context
-IMPORTANT: Use the DuckDuckGo search tool to:
+IMPORTANT: Use the GoogleSearch tool to:
 - Find recent medical literature about similar cases
 - Search for standard treatment protocols
-- Provide a list of relevant medical links of them too
+- Provide a list of relevant medical links
 - Research any relevant technological advances
 - Include 2-3 key references to support your analysis
 
@@ -118,25 +118,25 @@ if uploaded_file is not None:
             new_width = 500
             new_height = int(new_width / aspect_ratio)
             resized_image = image.resize((new_width, new_height))
-            
+
             st.image(
                 resized_image,
                 caption="Uploaded Medical Image",
                 use_container_width=True
             )
-            
+
             analyze_button = st.button(
                 "🔍 Analyze Image",
                 type="primary",
                 use_container_width=True
             )
-    
+
     with analysis_container:
         if analyze_button:
             image_path = "temp_medical_image.png"
             with open(image_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-            
+
             with st.spinner("🔄 Analyzing image... Please wait."):
                 try:
                     response = medical_agent.run(query, images=[image_path])
