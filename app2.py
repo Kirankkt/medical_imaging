@@ -18,32 +18,32 @@ def google_custom_search(query, api_key, cse_id, num_results=3):
     return search_results.get("items", [])
 
 # Streamlit app configuration
-if "GOOGLE_API_KEY" not in st.session_state:
-    st.session_state.GOOGLE_API_KEY = None
+if "GEMINI_API_KEY" not in st.session_state:
+    st.session_state.GEMINI_API_KEY = None
 
 with st.sidebar:
     st.title("ℹ️ Configuration")
 
-    if not st.session_state.GOOGLE_API_KEY:
+    if not st.session_state.GEMINI_API_KEY:
         api_key = st.text_input(
-            "Enter your Google API Key:",
+            "Enter your Gemini API Key:",
             type="password"
         )
         st.caption(
-            "Get your API key from [Google Cloud Console](https://console.cloud.google.com/apis/credentials) 🔑"
+            "Get your API key from [Google AI Studio](https://aistudio.google.com/apikey) 🔑"
         )
         if api_key:
-            st.session_state.GOOGLE_API_KEY = api_key
+            st.session_state.GEMINI_API_KEY = api_key
             st.success("API Key saved!")
             st.experimental_rerun()
     else:
         st.success("API Key is configured")
         if st.button("🔄 Reset API Key"):
-            st.session_state.GOOGLE_API_KEY = None
+            st.session_state.GEMINI_API_KEY = None
             st.experimental_rerun()
 
-    if "CUSTOM_SEARCH_ENGINE_ID" not in st.secrets:
-        st.error("Please add your Custom Search Engine ID to the secrets.")
+    if "GOOGLE_API_KEY" not in st.secrets or "CUSTOM_SEARCH_ENGINE_ID" not in st.secrets:
+        st.error("Please add your Google API Key and Custom Search Engine ID to the secrets.")
 
     st.info(
         "This tool provides AI-powered analysis of medical imaging data using "
@@ -55,9 +55,9 @@ with st.sidebar:
         "Do not make medical decisions based solely on this analysis."
     )
 
-# Check if API key and CSE ID are available
-if not st.session_state.GOOGLE_API_KEY or "CUSTOM_SEARCH_ENGINE_ID" not in st.secrets:
-    st.warning("Please configure your API key and Custom Search Engine ID in the sidebar to continue.")
+# Check if API keys and CSE ID are available
+if not st.session_state.GEMINI_API_KEY or "GOOGLE_API_KEY" not in st.secrets or "CUSTOM_SEARCH_ENGINE_ID" not in st.secrets:
+    st.warning("Please configure your API keys and Custom Search Engine ID in the sidebar to continue.")
 else:
     st.title("🏥 Medical Imaging Diagnosis Agent")
     st.write("Upload a medical image for professional analysis")
@@ -122,7 +122,7 @@ else:
                         search_query = "Recent medical literature on MRI brain scan abnormalities"
                         search_results = google_custom_search(
                             search_query,
-                            api_key=st.session_state.GOOGLE_API_KEY,
+                            api_key=st.secrets["GOOGLE_API_KEY"],
                             cse_id=st.secrets["CUSTOM_SEARCH_ENGINE_ID"]
                         )
 
